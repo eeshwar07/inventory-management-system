@@ -30,7 +30,11 @@ export function ReceiveBadge({ item }: { item: InventoryItem }) {
           ? "border-rose-300/80 bg-rose-50 text-rose-950"
           : "border-border bg-background text-foreground"
   return (
-    <Badge variant="outline" className={`max-w-[16rem] truncate font-normal ${color}`}>
+    <Badge
+      variant="outline"
+      title={text}
+      className={`max-w-[16rem] truncate font-normal ${color}`}
+    >
       {text}
     </Badge>
   )

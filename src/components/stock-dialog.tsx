@@ -60,9 +60,7 @@ export function StockDialog({
       type,
       quantity: type === "adjust" ? qty : Math.abs(qty),
       reason:
-        type === "waste"
-          ? reason.trim() || WASTE_REASONS[0]
-          : reason.trim() || MOVEMENT_LABELS[type],
+        type === "waste" ? reason.trim() || WASTE_REASONS[0] : reason.trim(),
     })
     setQuantity("")
     setReason("")

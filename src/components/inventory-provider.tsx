@@ -22,7 +22,7 @@ import {
   subscribeInventory,
   writeInventory,
 } from "@/lib/inventory-store"
-import { RECEIVE_COLOR_LABELS, statusFromColor } from "@/lib/types"
+import { MOVEMENT_LABELS, RECEIVE_COLOR_LABELS, statusFromColor } from "@/lib/types"
 import type {
   FlavorSize,
   InventoryItem,
@@ -164,7 +164,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         toast.error("That item is no longer in inventory.")
         return
       }
-      const nextItem = applyMovement(item, input.type, input.quantity)
+      const note = input.reason.trim()
+      const nextItem = applyMovement(item, input.type, input.quantity, {
+        note,
+      })
       writeInventory({
         items: current.items.map((candidate) =>
           candidate.id === item.id ? nextItem : candidate
@@ -177,7 +180,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             type: input.type,
             quantity: input.quantity,
             unit: item.unit,
-            reason: input.reason,
+            reason: note || MOVEMENT_LABELS[input.type],
             createdAt: new Date().toISOString(),
           },
           ...current.movements,
