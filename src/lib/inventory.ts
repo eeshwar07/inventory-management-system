@@ -21,9 +21,11 @@ import {
   emptyFlavorSizes,
   FLAVOR_GROUPS,
   ICE_CREAM_LISTS,
+  MOVEMENT_TYPES,
   RECEIVE_COLORS,
   RECEIVE_STATUSES,
   statusFromColor,
+  UNITS,
 } from "@/lib/types"
 
 export function inferReceiveColor(item: {
@@ -238,30 +240,120 @@ export function applyMovement(
   return next
 }
 
+export class InventoryPayloadError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "InventoryPayloadError"
+  }
+}
+
 export function parseSnapshot(raw: string | null): InventorySnapshot | null {
   if (!raw) return null
-  const parsed = JSON.parse(raw) as InventorySnapshot
-  if (!Array.isArray(parsed.items) || !Array.isArray(parsed.movements)) {
-    throw new Error("Saved inventory is missing items or movements.")
+  return normalizeSnapshot(JSON.parse(raw))
+}
+
+export function normalizeSnapshot(value: unknown): InventorySnapshot {
+  if (!value || typeof value !== "object") {
+    throw new InventoryPayloadError("Inventory payload must be an object.")
   }
+  const parsed = value as { items?: unknown; movements?: unknown }
+  if (!Array.isArray(parsed.items) || !Array.isArray(parsed.movements)) {
+    throw new InventoryPayloadError("Saved inventory is missing items or movements.")
+  }
+
+  const items = parsed.items.map((item, index) => normalizeItem(item, index))
+  const movements = parsed.movements.map((movement, index) =>
+    normalizeMovement(movement, index)
+  )
+  assertUniqueIds(items.map((item) => item.id), "item")
+  assertUniqueIds(movements.map((movement) => movement.id), "movement")
+  return { items, movements }
+}
+
+function assertUniqueIds(ids: string[], label: string) {
+  const seen = new Set<string>()
+  for (const id of ids) {
+    if (seen.has(id)) {
+      throw new InventoryPayloadError(`Duplicate ${label} id ${id}.`)
+    }
+    seen.add(id)
+  }
+}
+
+function normalizeItem(value: unknown, index: number): InventoryItem {
+  if (!value || typeof value !== "object") {
+    throw new InventoryPayloadError(`Item ${index + 1} is invalid.`)
+  }
+  const item = value as InventoryItem
+  const id = typeof item.id === "string" ? item.id.trim() : ""
+  if (!id) throw new InventoryPayloadError(`Item ${index + 1} is missing an id.`)
+  if (typeof item.name !== "string" || !item.name.trim()) {
+    throw new InventoryPayloadError(`Item ${id} is missing a name.`)
+  }
+  if (!item.category || !item.unit || !item.location) {
+    throw new InventoryPayloadError(
+      `Item ${id} is missing category, unit, or location.`
+    )
+  }
+
   return {
-    items: parsed.items.map((item, index) => ({
-      ...item,
-      garageQuantity: item.garageQuantity ?? 0,
-      sheet: inferSheet(item),
-      iceCreamList: inferIceCreamList(item),
-      flavorGroup: FLAVOR_GROUPS.includes(item.flavorGroup)
-        ? item.flavorGroup
-        : "regular",
-      flavorSizes: inferFlavorSizes(item.flavorSizes),
-      serial: item.serial ?? index + 1,
-      orderedQty: item.orderedQty ?? null,
-      orderedOn: item.orderedOn ?? null,
-      receivedOn: item.receivedOn ?? null,
-      receiveStatus: inferReceiveStatus(item),
-      receiveColor: inferReceiveColor(item),
-      receiveNote: item.receiveNote ?? "",
-    })),
-    movements: parsed.movements,
+    ...item,
+    id,
+    name: item.name,
+    sku: typeof item.sku === "string" ? item.sku : "",
+    garageQuantity: item.garageQuantity ?? 0,
+    sheet: inferSheet(item),
+    iceCreamList: inferIceCreamList(item),
+    flavorGroup: FLAVOR_GROUPS.includes(item.flavorGroup)
+      ? item.flavorGroup
+      : "regular",
+    flavorSizes: inferFlavorSizes(item.flavorSizes),
+    serial: item.serial ?? index + 1,
+    orderedQty: item.orderedQty ?? null,
+    orderedOn: item.orderedOn ?? null,
+    receivedOn: item.receivedOn ?? null,
+    receiveStatus: inferReceiveStatus(item),
+    receiveColor: inferReceiveColor(item),
+    receiveNote: item.receiveNote ?? "",
+    notes: item.notes ?? "",
+    supplier: item.supplier ?? "",
+    parLevel: item.parLevel ?? 0,
+    reorderPoint: item.reorderPoint ?? 0,
+    unitCost: item.unitCost ?? 0,
+    quantity: item.quantity ?? 0,
+    expiresOn: item.expiresOn ?? null,
+    lastCountedAt: item.lastCountedAt || new Date().toISOString(),
+  }
+}
+
+function normalizeMovement(value: unknown, index: number): StockMovement {
+  if (!value || typeof value !== "object") {
+    throw new InventoryPayloadError(`Movement ${index + 1} is invalid.`)
+  }
+  const movement = value as Partial<StockMovement>
+  const id = typeof movement.id === "string" ? movement.id.trim() : ""
+  if (!id) {
+    throw new InventoryPayloadError(`Movement ${index + 1} is missing an id.`)
+  }
+  if (!movement.type || !MOVEMENT_TYPES.includes(movement.type)) {
+    throw new InventoryPayloadError(`Movement ${id} has an unknown type.`)
+  }
+  const quantity = Number(movement.quantity)
+  if (!Number.isFinite(quantity)) {
+    throw new InventoryPayloadError(`Movement ${id} has an invalid quantity.`)
+  }
+
+  return {
+    id,
+    itemId: typeof movement.itemId === "string" ? movement.itemId : "",
+    itemName: typeof movement.itemName === "string" ? movement.itemName : "",
+    type: movement.type,
+    quantity,
+    unit: movement.unit && UNITS.includes(movement.unit) ? movement.unit : "each",
+    reason: typeof movement.reason === "string" ? movement.reason : "",
+    createdAt:
+      typeof movement.createdAt === "string" && movement.createdAt
+        ? movement.createdAt
+        : new Date().toISOString(),
   }
 }

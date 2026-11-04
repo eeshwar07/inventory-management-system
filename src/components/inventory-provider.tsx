@@ -16,7 +16,8 @@ import {
   getInventoryError,
   getInventorySnapshot,
   getServerInventorySnapshot,
-  hydrateFromLocalStorage,
+  hydrateFromServer,
+  isInventoryReady,
   restoreInventorySeed,
   subscribeInventory,
   writeInventory,
@@ -57,9 +58,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     getInventorySnapshot,
     getServerInventorySnapshot
   )
+  const ready = useSyncExternalStore(
+    subscribeInventory,
+    isInventoryReady,
+    () => false
+  )
 
   useEffect(() => {
-    hydrateFromLocalStorage()
+    hydrateFromServer()
   }, [])
 
   const error = getInventoryError()
@@ -221,6 +227,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       upsertItem,
     ]
   )
+
+  if (!ready) {
+    return (
+      <div className="text-muted-foreground grid min-h-dvh place-items-center text-sm">
+        Loading inventory…
+      </div>
+    )
+  }
 
   return (
     <InventoryContext.Provider value={value}>
