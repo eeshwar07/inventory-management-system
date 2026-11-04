@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node -e \"try{require.resolve('pg')}catch{console.error('Missing pg. Run npm install in the project root, then npm run dev.');process.exit(1)}\"",
+    "prebuild": "node -e \"try{require.resolve('pg')}catch{console.error('Missing pg. Run npm install in the project root, then npm run build.');process.exit(1)}\"",
     "dev": "next dev --port 43127",
     "build": "next build",
     "start": "next start --port 43127",
