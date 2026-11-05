@@ -394,7 +394,7 @@ export function ItemFormDialog({
               <Input
                 type="number"
                 min="0"
-                step="0.1"
+                step="1"
                 value={form.garageQuantity}
                 onValueChange={(value) =>
                   setForm((current) => ({
@@ -408,7 +408,7 @@ export function ItemFormDialog({
               <Input
                 type="number"
                 min="0"
-                step="0.1"
+                step="1"
                 value={form.parLevel}
                 onValueChange={(value) =>
                   setForm((current) => ({ ...current, parLevel: value }))
@@ -419,7 +419,7 @@ export function ItemFormDialog({
               <Input
                 type="number"
                 min="0"
-                step="0.1"
+                step="1"
                 value={form.reorderPoint}
                 onValueChange={(value) =>
                   setForm((current) => ({ ...current, reorderPoint: value }))
@@ -430,7 +430,7 @@ export function ItemFormDialog({
               <Input
                 type="number"
                 min="0"
-                step="0.01"
+                step="1"
                 value={form.unitCost}
                 onValueChange={(value) =>
                   setForm((current) => ({ ...current, unitCost: value }))
