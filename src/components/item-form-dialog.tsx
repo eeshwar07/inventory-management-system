@@ -354,7 +354,7 @@ export function ItemFormDialog({
               <Input
                 type="number"
                 min="0"
-                step="0.1"
+                step="1"
                 value={form.orderedQty}
                 onValueChange={(value) =>
                   setForm((current) => ({ ...current, orderedQty: value }))
@@ -366,7 +366,7 @@ export function ItemFormDialog({
               <Input
                 type="number"
                 min="0"
-                step="0.1"
+                step="1"
                 value={form.quantity}
                 onValueChange={(value) =>
                   setForm((current) => ({ ...current, quantity: value }))
