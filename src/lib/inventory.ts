@@ -214,7 +214,8 @@ export function computeMetrics(
 export function applyMovement(
   item: InventoryItem,
   type: MovementType,
-  quantity: number
+  quantity: number,
+  options: { note?: string } = {}
 ): InventoryItem {
   let nextQty = item.quantity
   if (type === "receive") nextQty += quantity
@@ -235,6 +236,8 @@ export function applyMovement(
       ordered !== null && next.quantity < ordered ? "yellow" : "green"
     next.receiveColor = color
     next.receiveStatus = statusFromColor(color)
+    const note = options.note?.trim() ?? ""
+    if (note) next.receiveNote = note
   }
 
   return next
