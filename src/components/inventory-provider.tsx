@@ -22,7 +22,12 @@ import {
   subscribeInventory,
   writeInventory,
 } from "@/lib/inventory-store"
-import { MOVEMENT_LABELS, RECEIVE_COLOR_LABELS, statusFromColor } from "@/lib/types"
+import {
+  FLAVOR_SIZE_LABELS,
+  MOVEMENT_LABELS,
+  RECEIVE_COLOR_LABELS,
+  statusFromColor,
+} from "@/lib/types"
 import type {
   FlavorSize,
   InventoryItem,
@@ -102,9 +107,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const setReceiveColor = useCallback((id: string, color: ReceiveColor) => {
     const current = getInventorySnapshot()
     const item = current.items.find((candidate) => candidate.id === id)
-    if (!item) return
+    if (!item || item.receiveColor === color) return
     writeInventory({
-      ...current,
       items: current.items.map((candidate) =>
         candidate.id === id
           ? {
@@ -114,6 +118,22 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             }
           : candidate
       ),
+      movements: [
+        {
+          id: newId("mov"),
+          itemId: item.id,
+          itemName: item.name,
+          type: "status",
+          quantity: 0,
+          unit: item.unit,
+          reason:
+            color === "none"
+              ? "Cleared receive color"
+              : RECEIVE_COLOR_LABELS[color],
+          createdAt: new Date().toISOString(),
+        },
+        ...current.movements,
+      ],
     })
     toast.success(`${item.name}: ${RECEIVE_COLOR_LABELS[color]}`)
   }, [])
@@ -121,17 +141,33 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const setFlavorSize = useCallback(
     (id: string, size: FlavorSize, quantity: number) => {
       const current = getInventorySnapshot()
+      const item = current.items.find((candidate) => candidate.id === id)
       const nextQty = Number.isFinite(quantity) && quantity >= 0 ? quantity : 0
+      if (!item || item.flavorSizes[size] === nextQty) return
+      const previous = item.flavorSizes[size]
       writeInventory({
-        ...current,
-        items: current.items.map((item) =>
-          item.id === id
+        items: current.items.map((candidate) =>
+          candidate.id === id
             ? {
-                ...item,
-                flavorSizes: { ...item.flavorSizes, [size]: nextQty },
+                ...candidate,
+                flavorSizes: { ...candidate.flavorSizes, [size]: nextQty },
+                lastCountedAt: new Date().toISOString(),
               }
-            : item
+            : candidate
         ),
+        movements: [
+          {
+            id: newId("mov"),
+            itemId: item.id,
+            itemName: item.name,
+            type: "count",
+            quantity: nextQty,
+            unit: item.unit,
+            reason: `${FLAVOR_SIZE_LABELS[size]}: ${previous} → ${nextQty}`,
+            createdAt: new Date().toISOString(),
+          },
+          ...current.movements,
+        ],
       })
     },
     []

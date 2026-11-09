@@ -25,9 +25,9 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart"
 import { useInventory } from "@/components/inventory-provider"
-import { formatDateTime, formatNumber } from "@/lib/format"
+import { formatDateTime, formatMovementBadge, formatNumber } from "@/lib/format"
 import { computeMetrics, itemsForIceCreamList, itemsForSheet } from "@/lib/inventory"
-import { MOVEMENT_LABELS, SHEET_LABELS } from "@/lib/types"
+import { SHEET_LABELS } from "@/lib/types"
 import type { SheetKind } from "@/lib/types"
 
 const chartConfig = {
@@ -60,11 +60,19 @@ export function DashboardView() {
     () => movements.filter((movement) => sheetItemIds.has(movement.itemId)),
     [movements, sheetItemIds]
   )
+  const recent = useMemo(() => {
+    if (sheet !== "ice-cream") return sheetMovements.slice(0, 6)
+    const iceCreamIds = new Set(
+      itemsForSheet(items, "ice-cream").map((item) => item.id)
+    )
+    return movements
+      .filter((movement) => iceCreamIds.has(movement.itemId))
+      .slice(0, 6)
+  }, [items, movements, sheet, sheetMovements])
 
   if (error) return <ErrorScreen message={error} onReset={reset} />
 
   const metrics = computeMetrics(sheetItems, sheetMovements)
-  const recent = sheetMovements.slice(0, 6)
 
   return (
     <div>
@@ -242,7 +250,9 @@ export function DashboardView() {
           <CardHeader className="flex-row items-start justify-between">
             <div>
               <CardTitle>Recent activity</CardTitle>
-              <CardDescription>Receiving, usage, waste, and counts.</CardDescription>
+              <CardDescription>
+                Sheet edits, receiving, usage, waste, and counts.
+              </CardDescription>
             </div>
             <Button
               variant="ghost"
@@ -256,7 +266,7 @@ export function DashboardView() {
           <CardContent className="space-y-3">
             {recent.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                No movements yet. Receive a delivery or log a count.
+                No movements yet. Update a sheet, receive a delivery, or log a count.
               </p>
             ) : (
               recent.map((movement) => (
@@ -268,10 +278,7 @@ export function DashboardView() {
                       {movement.reason ? ` · ${movement.reason}` : ""}
                     </p>
                   </div>
-                  <Badge variant="outline">
-                    {MOVEMENT_LABELS[movement.type]} {formatNumber(movement.quantity)}{" "}
-                    {movement.unit}
-                  </Badge>
+                  <Badge variant="outline">{formatMovementBadge(movement)}</Badge>
                 </div>
               ))
             )}
