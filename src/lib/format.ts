@@ -1,4 +1,5 @@
-import type { StockStatus } from "@/lib/types"
+import type { StockMovement, StockStatus } from "@/lib/types"
+import { MOVEMENT_LABELS } from "@/lib/types"
 
 const INDIANA_TZ = "America/Indiana/Indianapolis"
 
@@ -15,6 +16,16 @@ export function formatNumber(value: number, digits = 1) {
     maximumFractionDigits: digits,
     minimumFractionDigits: value % 1 === 0 ? 0 : digits,
   }).format(value)
+}
+
+export function formatMovementQuantity(movement: Pick<StockMovement, "type" | "quantity" | "unit">) {
+  if (movement.type === "status") return "—"
+  return `${formatNumber(movement.quantity)} ${movement.unit}`
+}
+
+export function formatMovementBadge(movement: Pick<StockMovement, "type" | "quantity" | "unit">) {
+  if (movement.type === "status") return MOVEMENT_LABELS.status
+  return `${MOVEMENT_LABELS[movement.type]} ${formatNumber(movement.quantity)} ${movement.unit}`
 }
 
 function ordinal(day: number) {

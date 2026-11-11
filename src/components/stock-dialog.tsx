@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select"
 import { useInventory } from "@/components/inventory-provider"
 import type { InventoryItem, MovementType } from "@/lib/types"
-import { MOVEMENT_LABELS, MOVEMENT_TYPES, WASTE_REASONS } from "@/lib/types"
+import { MOVEMENT_LABELS, STOCK_DIALOG_TYPES, WASTE_REASONS } from "@/lib/types"
 
 export function StockDialog({
   open,
@@ -96,7 +96,7 @@ export function StockDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {MOVEMENT_TYPES.map((movement) => (
+                {STOCK_DIALOG_TYPES.map((movement) => (
                   <SelectItem key={movement} value={movement}>
                     {MOVEMENT_LABELS[movement]}
                   </SelectItem>

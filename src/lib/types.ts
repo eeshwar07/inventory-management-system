@@ -54,12 +54,21 @@ export const LOCATIONS = [
 
 export type Location = (typeof LOCATIONS)[number]
 
+export const STOCK_DIALOG_TYPES = [
+  "receive",
+  "use",
+  "waste",
+  "adjust",
+  "count",
+] as const
+
 export const MOVEMENT_TYPES = [
   "receive",
   "use",
   "waste",
   "adjust",
   "count",
+  "status",
 ] as const
 
 export type MovementType = (typeof MOVEMENT_TYPES)[number]
@@ -225,4 +234,5 @@ export const MOVEMENT_LABELS: Record<MovementType, string> = {
   waste: "Waste",
   adjust: "Adjusted",
   count: "Counted",
+  status: "Status",
 }
