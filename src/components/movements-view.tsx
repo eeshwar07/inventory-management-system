@@ -55,7 +55,7 @@ export function MovementsView() {
     <div>
       <PageHeader
         title="Activity log"
-        description="Receives, sheet colors, ice-cream counts, usage, waste, and adjustments."
+        description="Receives, sheet colors, ice-cream counts, garage backup, usage, waste, and adjustments."
       />
 
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
@@ -96,8 +96,9 @@ export function MovementsView() {
         <div className="rounded-xl border border-dashed px-6 py-16 text-center">
           <h2 className="font-heading text-2xl">No activity yet</h2>
           <p className="text-muted-foreground mx-auto mt-2 max-w-md text-sm">
-            Receive a delivery, tap a receive color, or count ice-cream sizes. The
-            board stays empty until someone posts a movement.
+            Receive a delivery, tap a receive color, count ice-cream sizes, or
+            update garage backup. The board stays empty until someone posts a
+            movement.
           </p>
         </div>
       ) : rows.length === 0 ? (

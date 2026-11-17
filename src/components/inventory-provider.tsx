@@ -46,6 +46,7 @@ interface InventoryContextValue {
   deleteItem: (id: string) => void
   setReceiveColor: (id: string, color: ReceiveColor) => void
   setFlavorSize: (id: string, size: FlavorSize, quantity: number) => void
+  setGarageQuantity: (id: string, quantity: number) => void
   recordMovement: (input: {
     itemId: string
     type: MovementType
@@ -53,6 +54,23 @@ interface InventoryContextValue {
     reason: string
   }) => void
   reset: () => void
+}
+
+function garageBackupMovement(
+  item: Pick<InventoryItem, "id" | "name" | "unit">,
+  previous: number,
+  nextQty: number
+): StockMovement {
+  return {
+    id: newId("mov"),
+    itemId: item.id,
+    itemName: item.name,
+    type: "count",
+    quantity: nextQty,
+    unit: item.unit,
+    reason: `Garage backup: ${previous} → ${nextQty}`,
+    createdAt: new Date().toISOString(),
+  }
 }
 
 const InventoryContext = createContext<InventoryContextValue | null>(null)
@@ -79,6 +97,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const upsertItem = useCallback(
     (input: Omit<InventoryItem, "id" | "lastCountedAt"> & { id?: string }) => {
       const current = getInventorySnapshot()
+      const existing = input.id
+        ? current.items.find((item) => item.id === input.id)
+        : undefined
       const itemsNext = input.id
         ? current.items.map((item) =>
             item.id === input.id
@@ -98,7 +119,29 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             },
             ...current.items,
           ]
-      writeInventory({ ...current, items: itemsNext })
+      const nextGarage =
+        Number.isFinite(input.garageQuantity) && input.garageQuantity >= 0
+          ? input.garageQuantity
+          : 0
+      const movementsNext =
+        existing && existing.garageQuantity !== nextGarage
+          ? [
+              garageBackupMovement(
+                {
+                  id: existing.id,
+                  name: input.name,
+                  unit: input.unit,
+                },
+                existing.garageQuantity,
+                nextGarage
+              ),
+              ...current.movements,
+            ]
+          : current.movements
+      writeInventory({
+        items: itemsNext,
+        movements: movementsNext,
+      })
       toast.success(input.id ? `Updated ${input.name}` : `Added ${input.name}`)
     },
     []
@@ -172,6 +215,28 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     },
     []
   )
+
+  const setGarageQuantity = useCallback((id: string, quantity: number) => {
+    const current = getInventorySnapshot()
+    const item = current.items.find((candidate) => candidate.id === id)
+    const nextQty = Number.isFinite(quantity) && quantity >= 0 ? quantity : 0
+    if (!item || item.garageQuantity === nextQty) return
+    const previous = item.garageQuantity
+    writeInventory({
+      items: current.items.map((candidate) =>
+        candidate.id === id
+          ? {
+              ...candidate,
+              garageQuantity: nextQty,
+            }
+          : candidate
+      ),
+      movements: [
+        garageBackupMovement(item, previous, nextQty),
+        ...current.movements,
+      ],
+    })
+  }, [])
 
   const deleteItem = useCallback((id: string) => {
     const current = getInventorySnapshot()
@@ -251,6 +316,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       deleteItem,
       setReceiveColor,
       setFlavorSize,
+      setGarageQuantity,
       recordMovement,
       reset,
     }),
@@ -262,6 +328,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       recordMovement,
       reset,
       setFlavorSize,
+      setGarageQuantity,
       setReceiveColor,
       upsertItem,
     ]

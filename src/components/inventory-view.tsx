@@ -65,8 +65,15 @@ const COLOR_FILTERS: {
 ]
 
 export function InventoryView() {
-  const { error, items, deleteItem, reset, setReceiveColor, setFlavorSize } =
-    useInventory()
+  const {
+    error,
+    items,
+    deleteItem,
+    reset,
+    setReceiveColor,
+    setFlavorSize,
+    setGarageQuantity,
+  } = useInventory()
   const [query, setQuery] = useState("")
   const [colorFilter, setColorFilter] = useState<ColorFilter>("all")
   const [sheet, setSheet] = useState<SheetKind>("restaurant")
@@ -242,6 +249,7 @@ export function InventoryView() {
           onStock={openStock}
           onDelete={deleteItem}
           onColor={setReceiveColor}
+          onGarage={setGarageQuantity}
         />
       )}
 
@@ -279,6 +287,7 @@ function SheetList({
   onStock,
   onDelete,
   onColor,
+  onGarage,
 }: {
   id: string
   sheet: SheetKind
@@ -293,6 +302,7 @@ function SheetList({
   onStock: (item: InventoryItem, type: MovementType) => void
   onDelete: (id: string) => void
   onColor: (id: string, color: ReceiveColor) => void
+  onGarage: (id: string, quantity: number) => void
 }) {
   return (
     <section id={id} className="scroll-mt-20">
@@ -381,12 +391,13 @@ function SheetList({
                       onChange={(color) => onColor(item.id, color)}
                     />
                   </TableCell>
-                  <TableCell className="tabular-nums">
-                    {item.garageQuantity > 0 ? (
-                      formatNumber(item.garageQuantity)
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                  <TableCell>
+                    <SizeCell
+                      key={`${item.id}-garage-${item.garageQuantity}`}
+                      value={item.garageQuantity}
+                      onCommit={(quantity) => onGarage(item.id, quantity)}
+                      ariaLabel={`${item.name} garage backup`}
+                    />
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
