@@ -20,11 +20,13 @@ export function formatNumber(value: number, digits = 1) {
 
 export function formatMovementQuantity(movement: Pick<StockMovement, "type" | "quantity" | "unit">) {
   if (movement.type === "status") return "—"
+  if (movement.type === "order" && movement.quantity <= 0) return "—"
   return `${formatNumber(movement.quantity)} ${movement.unit}`
 }
 
 export function formatMovementBadge(movement: Pick<StockMovement, "type" | "quantity" | "unit">) {
   if (movement.type === "status") return MOVEMENT_LABELS.status
+  if (movement.type === "order" && movement.quantity <= 0) return MOVEMENT_LABELS.order
   return `${MOVEMENT_LABELS[movement.type]} ${formatNumber(movement.quantity)} ${movement.unit}`
 }
 
