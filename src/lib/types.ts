@@ -69,6 +69,7 @@ export const MOVEMENT_TYPES = [
   "adjust",
   "count",
   "status",
+  "order",
 ] as const
 
 export type MovementType = (typeof MOVEMENT_TYPES)[number]
@@ -235,4 +236,5 @@ export const MOVEMENT_LABELS: Record<MovementType, string> = {
   adjust: "Adjusted",
   count: "Counted",
   status: "Status",
+  order: "Ordered",
 }
