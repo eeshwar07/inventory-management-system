@@ -14,6 +14,7 @@ Counts, colors, garage backup, orders, receives, and the activity log are stored
 | [Setup](docs/SETUP.md) | Local Postgres, Docker Compose, hosted Postgres, env vars, troubleshooting |
 | [Architecture](docs/ARCHITECTURE.md) | Client snapshot store, replace-all saves, schema, and domain rules |
 | [API specification](docs/API.md) | `GET`/`PUT /api/inventory`, reset, health, and JSON schemas |
+| [Code structure](docs/CODE.md) | Folders, libraries, and React/Next concepts used in the source |
 | [OpenAPI 3.1](docs/openapi.yaml) | Same HTTP contract in OpenAPI form |
 | [Docs index](docs/README.md) | Short map of the files above |
 | [Word copies](docs/docx/) | `.docx` downloads of the same guides |
