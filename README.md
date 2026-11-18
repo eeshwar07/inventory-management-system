@@ -4,7 +4,18 @@ Inventory for **Nawabi Hyderabad House Greenwood** and **Kwality Ice-cream**: cu
 
 The list is loaded from the ice-cream and restaurant order sheets. Quantities, last receive dates, partial receipts, and garage backup counts come from those sheets. Unit costs were not on the sheets, so they start at $0 — add a cost on any SKU if you want dollar totals.
 
-Counts, colors, and the activity log are stored in PostgreSQL. Everyone who opens the site sees the same inventory.
+Counts, colors, garage backup, orders, receives, and the activity log are stored in PostgreSQL. Everyone who opens the site sees the same inventory.
+
+## Documentation
+
+| Guide | Contents |
+| --- | --- |
+| [Onboarding](docs/ONBOARDING.md) | Screens, receive colors, activity, and a first-hour map for developers |
+| [Setup](docs/SETUP.md) | Local Postgres, Docker Compose, hosted Postgres, env vars, troubleshooting |
+| [Architecture](docs/ARCHITECTURE.md) | Client snapshot store, replace-all saves, schema, and domain rules |
+| [API specification](docs/API.md) | `GET`/`PUT /api/inventory`, reset, health, and JSON schemas |
+| [OpenAPI 3.1](docs/openapi.yaml) | Same HTTP contract in OpenAPI form |
+| [Docs index](docs/README.md) | Short map of the files above |
 
 ## What you can do
 
@@ -13,6 +24,8 @@ Counts, colors, and the activity log are stored in PostgreSQL. Everyone who open
 - Each list matches the order sheet: S.No, date ordered, quantity, status, and garage backup
 - Mark each SKU green (received all), yellow (partial), or red (did not receive)
 - Filter either sheet to show a color first: not received, partial, or received all
+- Edit garage backup on the sheet; changes land in **Activity** without changing floor stock
+- Record date ordered, order quantity, and date received in **Edit item** — those edits land in **Activity**
 - See on-hand vs garage backup, out-of-stock SKUs, and a suggested order list on the dashboard
 - Maintain every item (par, reorder point, location, notes)
 - Receive deliveries, log usage, waste, adjustments, and counts
@@ -33,6 +46,8 @@ npm run dev
 ```
 
 Open [http://localhost:43127](http://localhost:43127).
+
+More install paths (Docker, Neon, TLS) are in [Setup](docs/SETUP.md).
 
 ## Host on a cloud server
 

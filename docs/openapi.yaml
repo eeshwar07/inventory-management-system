@@ -1,0 +1,231 @@
+openapi: 3.1.0
+info:
+  title: Nawabi Hyderabad House Greenwood inventory API
+  description: >
+    Snapshot API for restaurant and Kwality Ice-cream inventory.
+    There is no authentication. PUT replaces every item and movement row.
+  version: "0.1.0"
+
+servers:
+  - url: http://localhost:43127
+    description: Local Next.js dev/start (default port)
+
+paths:
+  /api/health:
+    get:
+      operationId: getHealth
+      summary: Process and database liveness
+      responses:
+        "200":
+          description: App and Postgres responded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthOk"
+        "503":
+          description: Database ping failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthDown"
+
+  /api/inventory:
+    get:
+      operationId: getInventory
+      summary: Load the full inventory snapshot
+      responses:
+        "200":
+          description: Current items and movements
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryResponse"
+        "500":
+          description: Database or configuration error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+    put:
+      operationId: putInventory
+      summary: Replace the full inventory snapshot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventorySnapshot"
+      responses:
+        "200":
+          description: Normalized snapshot after save (`pristine` is false)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryResponse"
+        "400":
+          description: Payload failed normalizeSnapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+        "500":
+          description: Database or configuration error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+
+  /api/inventory/reset:
+    post:
+      operationId: resetInventory
+      summary: Replace live data with the baked order-sheet seed
+      responses:
+        "200":
+          description: Seed snapshot (`pristine` is false)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryResponse"
+        "500":
+          description: Reset failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+
+components:
+  schemas:
+    HealthOk:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+          const: true
+    HealthDown:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+          const: false
+    ErrorBody:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          examples:
+            - DATABASE_URL is not set. Point it at the PostgreSQL database.
+            - Could not load inventory.
+            - Saved inventory is missing items or movements.
+    InventorySnapshot:
+      type: object
+      required: [items, movements]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryItem"
+        movements:
+          type: array
+          items:
+            $ref: "#/components/schemas/StockMovement"
+    InventoryResponse:
+      allOf:
+        - $ref: "#/components/schemas/InventorySnapshot"
+        - type: object
+          required: [pristine]
+          properties:
+            pristine:
+              type: boolean
+              description: true if app_meta.user_saved_at is null
+    FlavorSizes:
+      type: object
+      required: [tubs, pints, quat, half]
+      properties:
+        tubs: { type: number }
+        pints: { type: number }
+        quat: { type: number }
+        half: { type: number }
+    InventoryItem:
+      type: object
+      required: [id, name, category, unit, location]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        sku: { type: string }
+        sheet:
+          type: string
+          enum: [ice-cream, restaurant]
+        iceCreamList:
+          type: string
+          enum: [supplies, ice-creams]
+        flavorGroup:
+          type: string
+          enum: [regular, sugar-free, logs]
+        flavorSizes:
+          $ref: "#/components/schemas/FlavorSizes"
+        serial: { type: number }
+        category:
+          type: string
+          enum:
+            [
+              ice-cream,
+              packaging,
+              party,
+              beverages,
+              dry-goods,
+              disposables,
+              ops,
+            ]
+        unit:
+          $ref: "#/components/schemas/Unit"
+        quantity: { type: number }
+        orderedQty:
+          type: [number, "null"]
+        garageQuantity: { type: number }
+        parLevel: { type: number }
+        reorderPoint: { type: number }
+        unitCost: { type: number }
+        supplier: { type: string }
+        location:
+          type: string
+          enum: [Front counter, Kitchen, Dry storage, Garage]
+        orderedOn:
+          type: [string, "null"]
+        receivedOn:
+          type: [string, "null"]
+        receiveStatus:
+          type: string
+          enum: [received-all, received-partial, open, blank]
+        receiveColor:
+          type: string
+          enum: [green, yellow, red, none]
+        receiveNote: { type: string }
+        expiresOn:
+          type: [string, "null"]
+        lastCountedAt: { type: string }
+        notes: { type: string }
+    StockMovement:
+      type: object
+      required: [id, type, quantity]
+      properties:
+        id: { type: string }
+        itemId: { type: string }
+        itemName: { type: string }
+        type:
+          $ref: "#/components/schemas/MovementType"
+        quantity: { type: number }
+        unit:
+          $ref: "#/components/schemas/Unit"
+        reason: { type: string }
+        createdAt:
+          type: string
+          format: date-time
+    MovementType:
+      type: string
+      enum: [receive, use, waste, adjust, count, status, order]
+    Unit:
+      type: string
+      enum: [case, pack, each, box, roll, bag, bottle]
