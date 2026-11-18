@@ -16,6 +16,7 @@ Counts, colors, garage backup, orders, receives, and the activity log are stored
 | [API specification](docs/API.md) | `GET`/`PUT /api/inventory`, reset, health, and JSON schemas |
 | [OpenAPI 3.1](docs/openapi.yaml) | Same HTTP contract in OpenAPI form |
 | [Docs index](docs/README.md) | Short map of the files above |
+| [Word copies](docs/docx/) | `.docx` downloads of the same guides |
 
 ## What you can do
 
